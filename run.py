@@ -7,7 +7,7 @@ import os
 from ConfigParser import SafeConfigParser
 from commands import *
 import time
-from time import time
+from time import time, sleep
 #import subprocess
 
 def check_ping_dantri(vlanx):
@@ -64,7 +64,7 @@ def update_ro_st99(vlanx,gw):
        g1="nexthop via %s dev %s weight 3 "    %(gw,vlanx)
     return g1
     
-def print_ro_st99(vlanx,gw):
+def print_ro_st99():
     parser = SafeConfigParser()
     parser.read('config.ini.txt')
     g = 'ip ro replace default table 99 '
@@ -131,10 +131,14 @@ for section_name in parser.sections():
    dns = parser.get(section_name,'dns')
 #   print check_ping_dantri(vlan)
 #   print check_host_gw(vlan,gateway)
-s= print_ro_st99(vlan,gateway)
-sh = getoutput(s)
-print print_ro_st99(vlan,gateway)
 
+while True:
+   s= print_ro_st99() 
+   sh = getoutput(s)
+   print print_ro_st99()
+   sleep(900)
+# Sleep trong 15 phut 15*60
 #   print download(vlan,ipwan)
 #Da cho chay thu chuong trinh, tam thoi in vao ip r s t 99 
 #Ket qua la chuong trinh chay de update print ro st 99 mat 28 giay(quet toan bo cac vlan trong file config)
+#Thu cho slepp trong 15 phut,ket qua chay OKIE. cu 15' lai quet 1 lan,neu gateway die thi se khong update r s t,trong vi du nay la 99
