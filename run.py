@@ -8,7 +8,43 @@ from ConfigParser import SafeConfigParser
 from commands import *
 import time
 from time import time, sleep
-#import subprocess
+import smtplib
+import datetime
+import string
+
+def sent_mail(msg):
+    now = datetime.datetime.now()
+    sender = 'monitoring-system@vccorp.vn'
+    password = 'cb04d2c24e'
+    recipient = 'bachlequang@vccorp.vn'
+    subject = 'Alert GateWay VTC'
+#    headers = ["From: " + sender,
+#           "Subject: " + subject,
+#           "To: " + recipient,
+#           "MIME-Version: 1.0",
+#           "Content-Type: text/html"]
+#    headers = "\r\n".join(headers)
+    msg = now.strftime("Date: %d-%m-%Y") + "\n\n" + now.strftime("Time : %H:%M") + "\n\n" + msg
+    BODY = string.join((
+        "From: %s" % sender,
+        "To: %s" % recipient,
+        "Subject: %s" % subject ,
+        "",
+        "\n",
+        msg
+        ), "\r\n")
+#    msg1 = current
+#    msg = msg1 + msg
+    session = smtplib.SMTP('smtp.gmail.com:587')
+    session.ehlo()
+    session.starttls()
+    session.ehlo
+    session.login(sender, password)
+#    session.sendmail(sender, recipient, headers + "\r\n\r\n" + str(msg))
+#    session.sendmail(sender, recipient, headers + "\r\n\r\n" + msg)
+    session.sendmail(sender, recipient, BODY)
+    session.quit()
+
 
 def check_ping_dantri(vlanx):
     
@@ -47,11 +83,16 @@ def check_ping_admicro(vlanx):
 
 
 def check_host_gw(vlanx,gw):
+    msg = ""	
     ping_host_gw0 = 'ping -c 3 -W 1 %s' %gw
     ping_host_gw = ping_host_gw0 + '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'   
     ping_host_gw_result = getoutput(ping_host_gw)
     if (ping_host_gw_result == '0') :
 	return True
+    else:
+	msg = "Fiber %s ,co Ip gateway la: %s bi die roi" %(vlanx,gw)
+#        msg = msg+ '\n.\n' + "\\nSao the dyt nao the nhi?"
+        sent_mail(msg)
     return False
 #    	print "Fiber %s live nhe, ip la : %s" %(vlanx,gw)
 #    else:    	
@@ -77,9 +118,14 @@ def print_ro_st99():
        dns = parser.get(section_name,'dns')
        g1 += update_ro_st99(vlan,gateway)
     return g+g1
+
+def run_ro_st99():
+   while True:
+   	s= print_ro_st99()
+   	sh = getoutput(s)
+        sleep(900)
+
     
-#def pigdig(vlanx):
-##Thutuc nay de check dns query
 
 
 def download(vlanx,ip):
@@ -114,9 +160,6 @@ def download(vlanx,ip):
     f_222.close()
     xoa_file_222 = getoutput("rm -f testdownload.test_222")
 #    print "Download file dai 222 tu %s , toc do:%s , so giay la:%s" %(vlan,tocdo_222,giaydownload_222)
-
-
-
 #    print "wget download toi so giay -> %s , toc do download la %s" % (int(giaydownload),int(tocdo))
  
      
@@ -129,14 +172,16 @@ for section_name in parser.sections():
    gateway = parser.get(section_name,'gw')
    subnet = parser.get(section_name,'subnet')
    dns = parser.get(section_name,'dns')
-#   print check_ping_dantri(vlan)
-#   print check_host_gw(vlan,gateway)
+   check_host_gw(vlan,gateway)
 
-while True:
-   s= print_ro_st99() 
-   sh = getoutput(s)
-   print print_ro_st99()
-   sleep(900)
+#run_ro_st99()
+
+#while True:
+#   s= print_ro_st99() 
+#   sh = getoutput(s)
+#   print print_ro_st99()
+#   sleep(900)
+
 # Sleep trong 15 phut 15*60
 #   print download(vlan,ipwan)
 #Da cho chay thu chuong trinh, tam thoi in vao ip r s t 99 
