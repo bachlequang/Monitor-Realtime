@@ -14,9 +14,15 @@ import string
 
 def sent_mail(msg):
     now = datetime.datetime.now()
-    sender = 'monitoring-system@vccorp.vn'
-    password = 'cb04d2c24e'
-    recipient = 'bachlequang@vccorp.vn'
+    parser = SafeConfigParser()
+    parser.read('email.txt')
+#update them phan doc cac noi dung nhu sender,pass...tu file config
+    for section_name in parser.sections():
+       sender = parser.get(section_name,'sender')
+       password = parser.get(section_name,'password')
+       recipient = parser.get(section_name,'recipient')
+
+
     subject = 'Alert GateWay VTC'
 #    headers = ["From: " + sender,
 #           "Subject: " + subject,
@@ -123,7 +129,7 @@ def run_ro_st99():
    while True:
    	s= print_ro_st99()
    	sh = getoutput(s)
-        sleep(900)
+        sleep(900000)
 
     
 
@@ -174,7 +180,7 @@ for section_name in parser.sections():
    dns = parser.get(section_name,'dns')
    check_host_gw(vlan,gateway)
 
-#run_ro_st99()
+run_ro_st99()
 
 #while True:
 #   s= print_ro_st99() 

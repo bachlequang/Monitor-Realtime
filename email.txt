@@ -1,0 +1,4 @@
+[email]
+sender = monitoring-system@vccorp.vn
+password = cb04d2c24e
+recipient = bachlequang@vccorp.vn
