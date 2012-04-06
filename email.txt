@@ -1,4 +1,6 @@
 [email]
 sender = monitoring-system@vccorp.vn
 password = cb04d2c24e
-recipient = bachlequang@vccorp.vn
+recipient = network-system@vccorp.vn
+user_sms = bachpf
+password_sms = 84qpL+cmQJc=

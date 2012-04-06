@@ -11,18 +11,25 @@ from time import time, sleep
 import smtplib
 import datetime
 import string
+import suds
+from suds.client import Client
+
 
 def sent_mail(msg):
     now = datetime.datetime.now()
     parser = SafeConfigParser()
     parser.read('email.txt')
 #update them phan doc cac noi dung nhu sender,pass...tu file config
+    url = "http://222.255.8.122:8888/ws/wsdl/MainProcessor.wsdl"
+    client = Client(url)
     for section_name in parser.sections():
        sender = parser.get(section_name,'sender')
        password = parser.get(section_name,'password')
        recipient = parser.get(section_name,'recipient')
+       user_sms = parser.get(section_name,'user_sms')
+       password_sms = parser.get(section_name,'password_sms')
 
-
+ 
     subject = 'Alert GateWay VTC'
 #    headers = ["From: " + sender,
 #           "Subject: " + subject,
@@ -49,6 +56,8 @@ def sent_mail(msg):
 #    session.sendmail(sender, recipient, headers + "\r\n\r\n" + str(msg))
 #    session.sendmail(sender, recipient, headers + "\r\n\r\n" + msg)
     session.sendmail(sender, recipient, BODY)
+#client.service.sendText("0986866755", "Thu nghiem python", "bachpf", "84qpL+cmQJc=")
+    
     session.quit()
 
 
