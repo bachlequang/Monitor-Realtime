@@ -15,6 +15,73 @@ import suds
 from suds.client import Client
 
 
+def send_sms(msg):
+  now = datetime.datetime.now()
+  msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M") + "\n" + msg
+  threshold       = 10
+  SMS_max         = 4
+  alert_interval  = 7200                                           #2 tieng roi quay vong
+  sms_interval    = 300                                            #5 phut' thi nhan tin 1 lan
+  start_work_hour = 8
+  end_work_hour   = 22
+  weekend_days        = 1    # So^' ngay` nghi? cuoi' tua^n`
+  SMS_count        = 0
+  alert_level      = 0
+  sent_alert_level = 0
+  critical         = 0
+  my_string        = ""
+  timing_by_sec    = int(getoutput("date +%s"))    # seconds since 1970-01-01 00:00:00 UTC
+  timing_sms_sent  = 0
+  url = "http://222.255.8.122:8888/ws/wsdl/MainProcessor.wsdl"
+  client = Client(url)
+  parser = SafeConfigParser()
+  parser.read('sms.txt')
+  for section_name in parser.sections():
+    user_sms = parser.get(section_name,'user_sms')
+    password_sms = parser.get(section_name,'password_sms')
+  while (1):
+     current_time = int(getoutput("date +%k"))
+     day_of_week  = int(getoutput("date +%u"))
+
+     if (current_time >= start_work_hour) and (current_time < end_work_hour ) and (day_of_week <= ( 7 - weekend_days )):
+#      	msg        = ""
+#     ping_dantri0 = 'ping -I vlan0108 -c 3 -W 1 dantri.com.vn'
+#     ping_dantri = ping_dantri0+ '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'
+#     if (getoutput(ping_dantri) >=50):
+#        msg = msg +"Die"
+        critical = threshold
+     timing_by_sec = int(getoutput("date +%s"))
+     if (alert_level != sent_alert_level) and (timing_by_sec >= ( timing_sms_sent + 300)):
+#         send_absolute_SMS()
+         if (critical >= threshold):
+              client.service.sendText("0908446886", "test", "bachpf", "84qpL+cmQJc=")
+              SMS_count = SMS_count + 1
+              timing_sms_sent = int(getoutput("date +%s"))
+              sleep(2)
+         critical = threshold - 1
+         sent_alert_level = alert_level
+     else:
+          if (SMS_max > SMS_count) and (timing_by_sec >= ( timing_sms_sent + 300)):
+#                 send_absolute_SMS()
+                 if (critical >= threshold):
+                       client.service.sendText("0908446886", "test", "bachpf", "84qpL+cmQJc=")
+                       SMS_count = SMS_count + 1
+                       timing_sms_sent = int(getoutput("date +%s"))
+                       sleep(2)
+                 critical = threshold - 1
+          elif (timing_by_sec >= ( timing_sms_sent + alert_interval)):
+                SMS_count = 0
+                sent_alert_level = 0
+                critical         = 0
+#     send_SMS_to()
+     sleep(10)
+  else:
+        sleep(2700)
+
+
+
+
+
 def sent_mail(msg):
     now = datetime.datetime.now()
     parser = SafeConfigParser()
@@ -26,8 +93,8 @@ def sent_mail(msg):
        sender = parser.get(section_name,'sender')
        password = parser.get(section_name,'password')
        recipient = parser.get(section_name,'recipient')
-       user_sms = parser.get(section_name,'user_sms')
-       password_sms = parser.get(section_name,'password_sms')
+#       user_sms = parser.get(section_name,'user_sms')
+#       password_sms = parser.get(section_name,'password_sms')
 
  
     subject = 'Alert GateWay VTC'
@@ -37,7 +104,7 @@ def sent_mail(msg):
 #           "MIME-Version: 1.0",
 #           "Content-Type: text/html"]
 #    headers = "\r\n".join(headers)
-    msg = now.strftime("Date: %d-%m-%Y") + "\n\n" + now.strftime("Time : %H:%M") + "\n\n" + msg
+    msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M") + "\n" + msg
     BODY = string.join((
         "From: %s" % sender,
         "To: %s" % recipient,
