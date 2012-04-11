@@ -1,8 +1,3 @@
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 import os
 from ConfigParser import SafeConfigParser
 from commands import *
@@ -14,16 +9,44 @@ import string
 import suds
 from suds.client import Client
 
+def email(msg):
+    parser = SafeConfigParser()
+    parser.read('config.txt')
+    for section_name in parser.sections():
+       sender = parser.get(section_name,'sender')
+       password = parser.get(section_name,'password')
+       recipient = parser.get(section_name,'recipient')
+    subject = 'Alert GateWay VTC'
+    BODY = string.join((
+        "From: %s" % sender,
+        "To: %s" % recipient,
+        "Subject: %s" % subject ,
+        "",
+        "\n",
+        msg
+        ), "\r\n")
+    session = smtplib.SMTP('smtp.gmail.com:587')
+    session.ehlo()
+    session.starttls()
+    session.ehlo
+    session.login(sender, password)
+    session.sendmail(sender, recipient, BODY)
+    session.quit()
 
-def send_sms(msg):
+def alert(msg):
   now = datetime.datetime.now()
-  msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M") + "\n" + msg
+#chuan  msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M") + "\n" + msg
+#  msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M"  ) + msg
+
+#  msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M. ") + msg
+  date = now.strftime("Date: %d-%m-%Y")
+  time = now.strftime("Time : %H:%M"  ) 
+#  msg = 
+  msg = date + "   "+ time + "       " + msg
   threshold       = 10
   SMS_max         = 4
   alert_interval  = 7200                                           #2 tieng roi quay vong
   sms_interval    = 300                                            #5 phut' thi nhan tin 1 lan
-  start_work_hour = 8
-  end_work_hour   = 22
   weekend_days        = 1    # So^' ngay` nghi? cuoi' tua^n`
   SMS_count        = 0
   alert_level      = 0
@@ -35,7 +58,7 @@ def send_sms(msg):
   url = "http://222.255.8.122:8888/ws/wsdl/MainProcessor.wsdl"
   client = Client(url)
   parser = SafeConfigParser()
-  parser.read('sms.txt')
+  parser.read('config.txt')
   for section_name in parser.sections():
     user_sms = parser.get(section_name,'user_sms')
     password_sms = parser.get(section_name,'password_sms')
@@ -43,18 +66,14 @@ def send_sms(msg):
      current_time = int(getoutput("date +%k"))
      day_of_week  = int(getoutput("date +%u"))
 
-     if (current_time >= start_work_hour) and (current_time < end_work_hour ) and (day_of_week <= ( 7 - weekend_days )):
-#      	msg        = ""
-#     ping_dantri0 = 'ping -I vlan0108 -c 3 -W 1 dantri.com.vn'
-#     ping_dantri = ping_dantri0+ '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'
-#     if (getoutput(ping_dantri) >=50):
-#        msg = msg +"Die"
+     if (current_time >= 8) and (current_time < 22 ) and (day_of_week <= ( 7 - weekend_days )): #gio lam viec la 8h,ket thuc luc 22h
         critical = threshold
      timing_by_sec = int(getoutput("date +%s"))
-     if (alert_level != sent_alert_level) and (timing_by_sec >= ( timing_sms_sent + 300)):
-#         send_absolute_SMS()
+     if (alert_level != sent_alert_level) and (timing_by_sec >= ( timing_sms_sent + 300)): #sau moi lan gui tin nhan thanh cong thi 5' se gui 1 lan,tong cong chi gui 4 tin nhan
+#sau do se vao vong lap 2 tieng sau moi check tiep
          if (critical >= threshold):
-              client.service.sendText("0908446886", "test", "bachpf", "84qpL+cmQJc=")
+              client.service.sendText("0908446886", msg, user_sms, password_sms)
+	      email(msg)
               SMS_count = SMS_count + 1
               timing_sms_sent = int(getoutput("date +%s"))
               sleep(2)
@@ -62,9 +81,9 @@ def send_sms(msg):
          sent_alert_level = alert_level
      else:
           if (SMS_max > SMS_count) and (timing_by_sec >= ( timing_sms_sent + 300)):
-#                 send_absolute_SMS()
                  if (critical >= threshold):
-                       client.service.sendText("0908446886", "test", "bachpf", "84qpL+cmQJc=")
+                       client.service.sendText("0908446886", msg, user_sms, password_sms)
+		       email(msg)
                        SMS_count = SMS_count + 1
                        timing_sms_sent = int(getoutput("date +%s"))
                        sleep(2)
@@ -73,72 +92,10 @@ def send_sms(msg):
                 SMS_count = 0
                 sent_alert_level = 0
                 critical         = 0
-#     send_SMS_to()
      sleep(10)
   else:
         sleep(2700)
 
-
-
-
-
-def sent_mail(msg):
-    now = datetime.datetime.now()
-    parser = SafeConfigParser()
-    parser.read('email.txt')
-#update them phan doc cac noi dung nhu sender,pass...tu file config
-    url = "http://222.255.8.122:8888/ws/wsdl/MainProcessor.wsdl"
-    client = Client(url)
-    for section_name in parser.sections():
-       sender = parser.get(section_name,'sender')
-       password = parser.get(section_name,'password')
-       recipient = parser.get(section_name,'recipient')
-#       user_sms = parser.get(section_name,'user_sms')
-#       password_sms = parser.get(section_name,'password_sms')
-
- 
-    subject = 'Alert GateWay VTC'
-#    headers = ["From: " + sender,
-#           "Subject: " + subject,
-#           "To: " + recipient,
-#           "MIME-Version: 1.0",
-#           "Content-Type: text/html"]
-#    headers = "\r\n".join(headers)
-    msg = now.strftime("Date: %d-%m-%Y") + "\n" + now.strftime("Time : %H:%M") + "\n" + msg
-    BODY = string.join((
-        "From: %s" % sender,
-        "To: %s" % recipient,
-        "Subject: %s" % subject ,
-        "",
-        "\n",
-        msg
-        ), "\r\n")
-#    msg1 = current
-#    msg = msg1 + msg
-    session = smtplib.SMTP('smtp.gmail.com:587')
-    session.ehlo()
-    session.starttls()
-    session.ehlo
-    session.login(sender, password)
-#    session.sendmail(sender, recipient, headers + "\r\n\r\n" + str(msg))
-#    session.sendmail(sender, recipient, headers + "\r\n\r\n" + msg)
-    session.sendmail(sender, recipient, BODY)
-#client.service.sendText("0986866755", "Thu nghiem python", "bachpf", "84qpL+cmQJc=")
-    
-    session.quit()
-
-
-def check_ping_dantri(vlanx):
-    
-    ping_dantri0 = 'ping -I %s -c 3 -W 1 dantri.com.vn' %vlanx
-    ping_dantri = ping_dantri0+ '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'
-    if (getoutput(ping_dantri) == 0) :
-#        print "%s ping toi Dantri LIVE" %vlanx
-	return True 
-    return False
-#    else
-#        print "%s ping toi Dantri.Com.vn Die roi" %vlanx
-        
 
 def check_ping_gmail(vlanx):
 
@@ -148,42 +105,32 @@ def check_ping_gmail(vlanx):
     if (getoutput(ping_gmail) == 0) :
 	return True
     return False
-#        print "%s ping toi Gmail LIVE" %vlanx
-#    else:
-#        print "%s ping dang bi DIE" %vlanx
-
-def check_ping_admicro(vlanx):
-
-    ping_admicro0 = 'ping -I %s -c 3 -W 1 cp.admicro.vn' %vlanx
-    ping_admicro = ping_admicro0 + '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'
-    ping_admicro_result = getoutput(ping_admicro)
-    if (getoutput(ping_admicro) == 0) :
-        return True
-    return False
-
-
-
 
 def check_host_gw(vlanx,gw):
-    msg = ""	
     ping_host_gw0 = 'ping -c 3 -W 1 %s' %gw
-    ping_host_gw = ping_host_gw0 + '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'   
+#    ping_host_gw = ping_host_gw0 + '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'   
+#    ping_host_gw0 = 'ping -I %s -c 3 -W 1 smtp.gmail.com' %vlanx
+    ping_host_gw = ping_host_gw0 + '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'
     ping_host_gw_result = getoutput(ping_host_gw)
-    if (ping_host_gw_result == '0') :
+    if (ping_host_gw_result >= "50") :
 	return True
     else:
-	msg = "Fiber %s ,co Ip gateway la: %s bi die roi" %(vlanx,gw)
-#        msg = msg+ '\n.\n' + "\\nSao the dyt nao the nhi?"
-        sent_mail(msg)
+	msg = "%s bi die" %(vlanx)
+        alert(msg)
     return False
-#    	print "Fiber %s live nhe, ip la : %s" %(vlanx,gw)
-#    else:    	
-#	print "Fiber %s bi chet roi,ip la %s" %(vlanx,gateway)
-        	
+
+def check_host_gw_ro(vlanx,gw):
+    ping_host_gw0 = 'ping -c 3 -W 1 %s' %gw
+    ping_host_gw = ping_host_gw0 + '| grep "%" | cut -d "%" -f 1 | cut -d " " -f 6'
+    ping_host_gw_result = getoutput(ping_host_gw)
+    if (ping_host_gw_result >= '50') :
+        return True
+    else:
+        return False
 
 def update_ro_st99(vlanx,gw):
     g1 = ''
-    if check_host_gw(vlanx,gw):
+    if check_host_gw_ro(vlanx,gw):
        g1="nexthop via %s dev %s weight 3 "    %(gw,vlanx)
     return g1
     
@@ -196,16 +143,13 @@ def print_ro_st99():
        vlan = parser.get(section_name,'vlan')
        ipwan = parser.get(section_name,'ip')
        gateway = parser.get(section_name,'gw')
-       subnet = parser.get(section_name,'subnet')
-       dns = parser.get(section_name,'dns')
        g1 += update_ro_st99(vlan,gateway)
     return g+g1
 
 def run_ro_st99():
    while True:
    	s= print_ro_st99()
-   	sh = getoutput(s)
-        sleep(900000)
+        sleep(1) #delay 1s roi chay tiep luon
 
     
 
@@ -256,7 +200,9 @@ for section_name in parser.sections():
    dns = parser.get(section_name,'dns')
    check_host_gw(vlan,gateway)
 
-run_ro_st99()
+#while True:
+#  print_ro_st99()
+#run_ro_st99()
 
 #while True:
 #   s= print_ro_st99() 
